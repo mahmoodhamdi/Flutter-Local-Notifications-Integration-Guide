@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications_feature/notification_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  NotificationHelper.init();
+  await NotificationHelper.init(); // Ensure the init method is awaited
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
@@ -42,19 +42,32 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(
-                onPressed: () {
-                  NotificationHelper.scheduleNotification(
-                    "Notification test",
-                    "my app Notification",
-                    5,
-                  );
-                },
-                child: const Text("Set Notification")),
+              onPressed: () {
+                NotificationHelper.scheduleNotification(
+                  title: "Notification",
+                  body: "my app Notification",         
+                 seconds: 1,
+                );
+              },
+              child: const Text("Set Notification"),
+            ),
             ElevatedButton(
-                onPressed: () {
-                  NotificationHelper().cancelAllNotifications();
-                },
-                child: const Text("Remove Notification")),
+              onPressed: () {
+                NotificationHelper().cancelAllNotifications();
+              },
+              child: const Text("Remove Notification"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                NotificationHelper.schedulePeriodicNotification(
+                  title: "Periodic Notification",
+                  body: "my app Periodic Notification",
+                  repeatInterval: RepeatInterval.everyMinute,
+
+                );
+              },
+              child: const Text("Set Periodic Notification"),
+            ),
           ],
         ),
       ),
