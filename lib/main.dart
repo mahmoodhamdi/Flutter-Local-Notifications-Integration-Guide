@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 NotificationHelper.scheduleNotification(
                   title: "Notification",
                   body: "my app Notification",         
-                 seconds: 1,
+                 seconds: 2,
                 );
               },
               child: const Text("Set Notification"),
