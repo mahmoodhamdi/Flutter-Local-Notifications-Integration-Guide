@@ -17,10 +17,10 @@ Welcome to the **Flutter Local Notifications Integration Guide**! This resource 
 - [x] Schedule notifications
 - [x] Customize notification appearance (title, body, icon)
 - [x] Cancel all notifications
+- [x] Periodic notifications
 
 ### Future Enhancements
 
-- [ ] Periodic notifications
 - [ ] Group notifications
 - [ ] Progress notifications
 - [ ] Media style notifications
