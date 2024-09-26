@@ -18,9 +18,11 @@ Welcome to the **Flutter Local Notifications Integration Guide**! This resource 
 - [x] Customize notification appearance (title, body, icon)
 - [x] Cancel all notifications
 - [x] Periodic notifications
+- [x] Custom notification sounds
 
 ### Future Enhancements
 
+- [ ] Schedule repeating notifications
 - [ ] Group notifications
 - [ ] Progress notifications
 - [ ] Media style notifications
@@ -28,6 +30,8 @@ Welcome to the **Flutter Local Notifications Integration Guide**! This resource 
 - [ ] Inbox style notifications
 - [ ] iOS-specific features (attachments, critical alerts)
 - [ ] Notification actions and buttons
+
+---
 
 ## 🚀 Getting Started
 
@@ -56,12 +60,12 @@ flutter pub get
 
 Edit your **android/app/src/main/AndroidManifest.xml** file to include the necessary permissions:
 
+**Note:** Add these permissions above the `<application>` tag.
+
 ```xml
-<manifest>
-  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-  <!-- Other permissions if necessary -->
-</manifest>
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+<!-- Other permissions if necessary -->
 ```
 
 - `android.permission.RECEIVE_BOOT_COMPLETED`: Ensures notifications are rescheduled after device reboot.
@@ -69,27 +73,26 @@ Edit your **android/app/src/main/AndroidManifest.xml** file to include the neces
 
 #### Add Receivers
 
-Insert the following receivers before the end of the **application** tag:
+Insert the following receivers before the end of the `<application>` tag:
 
 ```xml
-<application>
-  <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-  <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+<meta-data android:name="flutterEmbedding" android:value="2" />
+<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
     <intent-filter>
-      <action android:name="android.intent.action.BOOT_COMPLETED"/>
-      <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-      <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
-      <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+        <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
     </intent-filter>
-  </receiver>
-</application>
+</receiver>
 ```
 
 ### 3. Gradle Setup
 
-To ensure compatibility with scheduled notifications and desugaring, update your `android/app/build.gradle` file as follows:
+For scheduled notifications to be compatible with older Android versions, you need to enable **desugaring**. Update your application's Gradle file `android/app/build.gradle` as follows:
 
-```groovy
+```gradle
 android {
   defaultConfig {
     multiDexEnabled true
@@ -107,53 +110,67 @@ dependencies {
 }
 ```
 
-**Note:** The plugin uses Android Gradle Plugin (AGP) 7.3.1 or higher, so ensure your `android/build.gradle` has the correct classpath:
+Make sure your project is using **Android Gradle Plugin 7.3.1 or higher**.
 
-```groovy
-buildscript {
-  dependencies {
-    classpath 'com.android.tools.build:gradle:7.3.1'
-  }
+If your Flutter app crashes on Android 12L or later when desugaring is enabled, you may need to add the following dependencies:
+
+```gradle
+dependencies {
+    implementation 'androidx.window:window:1.0.0'
+    implementation 'androidx.window:window-java:1.0.0'
 }
 ```
 
-### 4. AndroidManifest.xml Setup
+Additionally, ensure your `compileSdk` is set to at least 34 in your Gradle configuration:
 
-Include the following permissions and receivers in your `AndroidManifest.xml`:
-
-```xml
-<manifest>
-  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
-  <application>
-    <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-    <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
-      <intent-filter>
-        <action android:name="android.intent.action.BOOT_COMPLETED"/>
-        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
-        <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
-        <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
-      </intent-filter>
-    </receiver>
-  </application>
-</manifest>
+```gradle
+android {
+    compileSdk 34
+}
 ```
 
-For full-screen intents and notification actions, add these permissions and receivers as needed:
+### 4. Custom Notification Sound Setup
 
-```xml
-<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
+You can now customize notification sounds with this setup.
+
+#### Add Sound File
+
+Add your custom notification sound file to the following locations in your project:
+
+- **Flutter assets**: Place your sound file in `assets/audio/`
+- **Android raw resources**: Add your sound file to `android/app/src/main/res/raw/`
+
+Ensure that the sound file follows these conditions:
+
+- File format: `.mp3`
+- File name: Use lowercase letters and underscores (e.g., `yaamsallyallaelnaby.mp3`).
+
+#### Update `pubspec.yaml`
+
+Configure the sound asset in your `pubspec.yaml` file under the `assets` section:
+
+```yaml
+flutter:
+  assets:
+    - assets/audio/
 ```
 
-### 5. Creating the Notification Helper Class
+#### Custom Sound Notification
 
-For a detailed implementation, refer to the [notification_helper.dart](./lib/notification_helper.dart) file.
+The custom sound feature is already integrated into the notification helper function. By default, the notification will play the custom sound file `yaamsallyallaelnaby.mp3`. You can specify the sound file or let it use the default one as follows:
 
-### 6. Implementing Notification UI Components
+```dart
+NotificationHelper.showBasicNotification(
+  id: Random().nextInt(1 << 32),
+  title: "Custom Sound Notification",
+  body: "This notification has a custom sound!",
+  sound: RawResourceAndroidNotificationSound('yaamsallyallaelnaby'),
+);
+```
 
-For a step-by-step guide, see the [main.dart](./lib/main.dart) file.
+If no sound is provided, the default sound (`yaamsallyallaelnaby.mp3`) will be used.
+
+---
 
 ## 🎉 Congratulations
 
@@ -164,7 +181,6 @@ If you found this guide helpful, don’t forget to ⭐ star this repository on G
 Thank you for reading!
 
 ---
-
-وَصَلَّى اللَّهُ وَسَلَّمَ عَلَى نَبِيِّنَا مُحَمَّدٍ وَالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
+ ***وَصَلَّى اللَّهُ وَسَلَّمَ عَلَى نَبِيِّنَا مُحَمَّدٍ وَالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ***
 
 ---
