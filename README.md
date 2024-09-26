@@ -56,15 +56,12 @@ flutter pub get
 
 Edit your **android/app/src/main/AndroidManifest.xml** file to include the necessary permissions:
 
-**note*
-it will be above the ***application*** tag
-
 ```xml
-
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <!-- Other permissions if necessary -->
-
+<manifest>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+  <!-- Other permissions if necessary -->
+</manifest>
 ```
 
 - `android.permission.RECEIVE_BOOT_COMPLETED`: Ensures notifications are rescheduled after device reboot.
@@ -72,28 +69,89 @@ it will be above the ***application*** tag
 
 #### Add Receivers
 
-Insert the following receivers before the end of the ***application*** tag:
+Insert the following receivers before the end of the **application** tag:
 
 ```xml
-<meta-data
-    android:name="flutterEmbedding"
-    android:value="2" />
-<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+<application>
+  <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+  <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
     <intent-filter>
+      <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+      <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+      <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+    </intent-filter>
+  </receiver>
+</application>
+```
+
+### 3. Gradle Setup
+
+To ensure compatibility with scheduled notifications and desugaring, update your `android/app/build.gradle` file as follows:
+
+```groovy
+android {
+  defaultConfig {
+    multiDexEnabled true
+  }
+
+  compileOptions {
+    coreLibraryDesugaringEnabled true
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+
+dependencies {
+  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
+}
+```
+
+**Note:** The plugin uses Android Gradle Plugin (AGP) 7.3.1 or higher, so ensure your `android/build.gradle` has the correct classpath:
+
+```groovy
+buildscript {
+  dependencies {
+    classpath 'com.android.tools.build:gradle:7.3.1'
+  }
+}
+```
+
+### 4. AndroidManifest.xml Setup
+
+Include the following permissions and receivers in your `AndroidManifest.xml`:
+
+```xml
+<manifest>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+
+  <application>
+    <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+    <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+      <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED"/>
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
         <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
         <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
-    </intent-filter>
-</receiver>
+      </intent-filter>
+    </receiver>
+  </application>
+</manifest>
 ```
 
-### 3. Creating the Notification Helper Class
+For full-screen intents and notification actions, add these permissions and receivers as needed:
+
+```xml
+<uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
+```
+
+### 5. Creating the Notification Helper Class
 
 For a detailed implementation, refer to the [notification_helper.dart](./lib/notification_helper.dart) file.
 
-### 4. Implementing Notification UI Components
+### 6. Implementing Notification UI Components
 
 For a step-by-step guide, see the [main.dart](./lib/main.dart) file.
 
@@ -105,6 +163,8 @@ If you found this guide helpful, don’t forget to ⭐ star this repository on G
 
 Thank you for reading!
 
-***
+---
+
 وَصَلَّى اللَّهُ وَسَلَّمَ عَلَى نَبِيِّنَا مُحَمَّدٍ وَالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
-***
+
+---
