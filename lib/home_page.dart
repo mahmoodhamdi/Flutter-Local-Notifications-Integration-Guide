@@ -13,10 +13,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // Utility method to display a SnackBar with a message
-
-  // Method to handle scheduling a notification with date and time pickers
-  Future<void> _scheduleNotification() async {
+    Future<void> _scheduleNotification() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
       firstDate: DateTime.now(),
