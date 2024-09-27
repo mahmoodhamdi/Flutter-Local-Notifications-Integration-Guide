@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications_feature/helpers/notification_helper.dart';
-import 'package:flutter_local_notifications_feature/home_page.dart';
+import 'package:flutter_local_notifications_feature/pages/home_page.dart';
 import 'package:flutter_local_notifications_feature/theme/theme.dart';
 
 void main() async {
@@ -12,7 +12,7 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
  
-  @override
+  @override 
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: AppThemes.lightTheme, // Apply light theme here

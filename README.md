@@ -19,6 +19,7 @@ Welcome to the **Flutter Local Notifications Integration Guide**! This resource 
 - [x] Cancel all notifications
 - [x] Periodic notifications
 - [x] Custom notification sounds
+- [x] Handle notification taps and responses
 
 ### Future Enhancements
 
@@ -37,7 +38,7 @@ Welcome to the **Flutter Local Notifications Integration Guide**! This resource 
 
 Integrating local notifications into your Flutter project is easy! Follow the steps below to get started.
 
-### 1. Add the flutter_local_notifications Package
+### 1. Add the `flutter_local_notifications` Package
 
 Add the package to your **pubspec.yaml** file:
 
@@ -46,6 +47,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_local_notifications: latest_version
+  timezone: latest_version
 ```
 
 Install the package by running:
@@ -172,6 +174,82 @@ If no sound is provided, the default sound (`yaamsallyallaelnaby.mp3`) will be u
 
 ---
 
+### 5. Initialize Notifications and Time Zones
+
+You must initialize the notification plugin along with time zone settings.
+
+#### Initialization
+
+In your `NotificationHelper`, initialize the notification settings and time zones as shown below:
+
+```dart
+class NotificationHelper {
+  static final FlutterLocalNotificationsPlugin _notification =
+      FlutterLocalNotificationsPlugin();
+
+  /// Initialize the notification settings and time zones.
+  static Future<void> init() async {
+    try {
+      const androidSettings =
+          AndroidInitializationSettings("@mipmap/ic_launcher");
+      const initSettings = InitializationSettings(android: androidSettings);
+      await _notification.initialize(
+        initSettings,
+        onDidReceiveBackgroundNotificationResponse: onNotificationTap,
+        onDidReceiveNotificationResponse: onNotificationTap,
+      );
+      tz.initializeTimeZones();
+    } catch (e) {
+      log("Error initializing notifications: $e");
+    }
+  }
+}
+```
+
+### 6. Handle Notification Taps
+
+You can now respond to user interactions when they tap on notifications. The tap listener and response handlers are integrated into the notification helper. This allows you to perform actions like navigation when the notification is tapped.
+
+#### Setup the Notification Tap Listener
+
+Set up a tap listener to perform actions when a user taps on a notification:
+
+```dart
+class NotificationHelper {
+  static StreamController<NotificationResponse> notificationResponseController =
+      StreamController<NotificationResponse>.broadcast();
+
+  /// Add the response to the stream on notification tap.
+  static void onNotificationTap(
+    NotificationResponse notificationResponse,
+  ) {
+    notificationResponseController.add(notificationResponse);
+  }
+
+  void onNotificationTapListener() {
+    NotificationHelper.notificationResponseController.stream
+        .listen((notificationResponse) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => NotificationPage()));
+    });
+  }
+}
+```
+
+Make sure you initialize this listener in your `initState`:
+
+```dart
+@override
+void initState() {
+  super.initState();
+  onNotificationTapListener();  // Listen for notification taps
+}
+```
+
+This will navigate to a specific page when the user taps on the notification.
+
+---
+
 ## 🎉 Congratulations
 
 You’ve successfully integrated local notifications into your Flutter app! For more advanced features and customization options, be sure to check out the official [Flutter Local Notifications Plugin Documentation](https://pub.dev/packages/flutter_local_notifications).
@@ -181,6 +259,5 @@ If you found this guide helpful, don’t forget to ⭐ star this repository on G
 Thank you for reading!
 
 ---
- ***وَصَلَّى اللَّهُ وَسَلَّمَ عَلَى نَبِيِّنَا مُحَمَّدٍ وَالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ***
 
----
+#### وَصَلَّى اللَّهُ وَسَلَّمَ عَلَى نَبِيِّنَا مُحَمَّدٍ وَالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ
