@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -14,11 +15,24 @@ class NotificationHelper {
       const androidSettings =
           AndroidInitializationSettings("@mipmap/ic_launcher");
       const initSettings = InitializationSettings(android: androidSettings);
-      await _notification.initialize(initSettings);
+      await _notification.initialize(
+        initSettings,
+        onDidReceiveBackgroundNotificationResponse: onNotificationTap,
+        onDidReceiveNotificationResponse: onNotificationTap,
+      );
       tz.initializeTimeZones();
     } catch (e) {
       log("Error initializing notifications: $e");
     }
+  }
+
+  /// Set up notification response listener.
+  static StreamController<NotificationResponse> notificationResponseController =
+      StreamController<NotificationResponse>.broadcast();
+  static void onNotificationTap(
+    NotificationResponse notificationResponse,
+  ) {
+    notificationResponseController.add(notificationResponse);
   }
 
   /// Show a basic notification with required title and body.
@@ -29,12 +43,14 @@ class NotificationHelper {
     Importance importance = Importance.max,
     Priority priority = Priority.high,
     bool silent = false,
+    String? payload,
   }) async {
     try {
       await _notification.show(
         id,
         title,
         body,
+        payload: payload,
         _buildNotificationDetails(
           channelId: "basic_notification",
           channelName: "My Basic Channel",
@@ -50,21 +66,22 @@ class NotificationHelper {
   }
 
   /// Show a repeating notification every minute.
-  static Future<void> showRepeatingNotification({
-    required String title,
-    required String body,
-    int id = 0,
-    RepeatInterval repeatInterval = RepeatInterval.everyMinute,
-    Importance importance = Importance.max,
-    Priority priority = Priority.high,
-    bool silent = false,
-  }) async {
+  static Future<void> showRepeatingNotification(
+      {required String title,
+      required String body,
+      int id = 0,
+      RepeatInterval repeatInterval = RepeatInterval.everyMinute,
+      Importance importance = Importance.max,
+      Priority priority = Priority.high,
+      bool silent = false,
+      String? payload}) async {
     try {
       await _notification.periodicallyShow(
         id,
         title,
         body,
         repeatInterval,
+        payload: payload,
         _buildNotificationDetails(
           channelId: "repeating_notification",
           channelName: "My Repeating Channel",
@@ -80,22 +97,24 @@ class NotificationHelper {
   }
 
   /// Show a scheduled notification after a delay.
-  static Future<void> showScheduleNotification({
-    required String title,
-    required String body,
-    required Duration delay,
-    int id = 0,
-    Importance importance = Importance.max,
-    Priority priority = Priority.high,
-    bool silent = false,
-  }) async {
+  static Future<void> showScheduleNotification(
+      {required String title,
+      required String body,
+      required Duration delay,
+      int id = 0,
+      Importance importance = Importance.max,
+      Priority priority = Priority.high,
+      bool silent = false,
+      String? payload}) async {
     try {
       await _notification.zonedSchedule(
         id,
+        payload: payload,
         title,
         body,
         tz.TZDateTime.now(tz.local).add(delay),
         _buildNotificationDetails(
+          sound: RawResourceAndroidNotificationSound('yaamsallyallaelnaby.mp3'),
           channelId: "schedule_notification",
           channelName: "My Schedule Channel",
           importance: importance,

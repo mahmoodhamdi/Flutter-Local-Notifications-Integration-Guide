@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications_feature/helpers/notification_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/show_snack_bar_helper.dart';
+import 'package:flutter_local_notifications_feature/pages/notification_page.dart';
 import 'package:flutter_local_notifications_feature/widgets/notification_button.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -13,7 +15,22 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-    Future<void> _scheduleNotification() async {
+  @override
+  initState() {
+    super.initState();
+
+    onNotificationTapListener();
+  }
+
+  void onNotificationTapListener() {
+    NotificationHelper.notificationResponseController.stream
+        .listen((notificationResponse) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => NotificationPage()));
+    });
+  }
+
+  Future<void> _scheduleNotification() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
       firstDate: DateTime.now(),
@@ -45,6 +62,7 @@ class _MyHomePageState extends State<MyHomePage> {
             id: Random().nextInt(4294967),
             title: "Scheduled Notification",
             body: "This is a scheduled notification",
+            payload: "payload",
           );
           showSnackBar(
               context: context,
@@ -120,6 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     id: Random().nextInt(429496),
                     title: "Basic Notification",
                     body: "This is a basic notification",
+                    payload: "payload",
                   );
                   showSnackBar(
                       context: context, message: "Basic notification shown");
@@ -129,10 +148,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 label: "Repeating Notification",
                 onPressed: () {
                   NotificationHelper.showRepeatingNotification(
-                    id: Random().nextInt(4294967),
-                    title: "Repeating Notification",
-                    body: "This is a repeating notification",
-                  );
+                      id: Random().nextInt(4294967),
+                      title: "Repeating Notification",
+                      body: "This is a repeating notification",
+                      payload: "payload",
+                      repeatInterval: RepeatInterval.everyMinute);
                   showSnackBar(
                       context: context, message: "Repeating notification set");
                 },
