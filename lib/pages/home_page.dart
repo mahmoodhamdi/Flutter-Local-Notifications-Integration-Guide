@@ -38,31 +38,23 @@ class _MyHomePageState extends State<MyHomePage> {
       initialDate: DateTime.now(),
     );
 
-    if (pickedDate == null) {
-      showSnackBar(context: context, message: "No date selected.");
-      return;
-    }
+    if (pickedDate != null) {
+      TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+      );
 
-    final TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
+      if (pickedTime != null) {
+        DateTime scheduledDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
 
-    if (pickedTime == null) {
-      showSnackBar(context: context, message: "No time selected.");
-      return;
-    }
-
-    final DateTime scheduledDateTime = DateTime(
-      pickedDate.year,
-      pickedDate.month,
-      pickedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
-    );
-
-    final int secondsUntilNotification =
-        scheduledDateTime.difference(DateTime.now()).inSeconds;
+        int secondsUntilNotification =
+            scheduledDateTime.difference(DateTime.now()).inSeconds;
 
         if (secondsUntilNotification > 0) {
           NotificationHelper.showScheduleNotification(
