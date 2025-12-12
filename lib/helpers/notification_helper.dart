@@ -271,6 +271,149 @@ class NotificationHelper {
     }
   }
 
+  /// Show a notification with a big picture (image).
+  /// [bigPicturePath] should be a file path on the device.
+  /// For drawable resources, use [showBigPictureFromDrawable].
+  static Future<void> showBigPictureNotification({
+    required String title,
+    required String body,
+    required String bigPicturePath,
+    int id = 0,
+    String? payload,
+    String? summaryText,
+    bool hideExpandedLargeIcon = false,
+  }) async {
+    try {
+      final BigPictureStyleInformation bigPictureStyle =
+          BigPictureStyleInformation(
+        FilePathAndroidBitmap(bigPicturePath),
+        contentTitle: title,
+        summaryText: summaryText ?? body,
+        hideExpandedLargeIcon: hideExpandedLargeIcon,
+      );
+
+      final androidDetails = AndroidNotificationDetails(
+        'big_picture_notification',
+        'Big Picture Notifications',
+        channelDescription: 'Channel for notifications with images',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: bigPictureStyle,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      final iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      await _notification.show(
+        id,
+        title,
+        body,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: payload,
+      );
+
+      log('Big picture notification shown: $title');
+    } catch (e) {
+      log('Error showing big picture notification: $e');
+    }
+  }
+
+  /// Show a notification with a big picture from drawable resources.
+  /// [drawableName] is the name of the drawable in res/drawable folder.
+  static Future<void> showBigPictureFromDrawable({
+    required String title,
+    required String body,
+    required String drawableName,
+    int id = 0,
+    String? payload,
+    String? summaryText,
+  }) async {
+    try {
+      final BigPictureStyleInformation bigPictureStyle =
+          BigPictureStyleInformation(
+        DrawableResourceAndroidBitmap(drawableName),
+        contentTitle: title,
+        summaryText: summaryText ?? body,
+      );
+
+      final androidDetails = AndroidNotificationDetails(
+        'big_picture_notification',
+        'Big Picture Notifications',
+        channelDescription: 'Channel for notifications with images',
+        importance: Importance.max,
+        priority: Priority.high,
+        styleInformation: bigPictureStyle,
+        largeIcon: DrawableResourceAndroidBitmap(drawableName),
+        icon: '@mipmap/ic_launcher',
+      );
+
+      final iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      await _notification.show(
+        id,
+        title,
+        body,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: payload,
+      );
+
+      log('Big picture from drawable shown: $title');
+    } catch (e) {
+      log('Error showing big picture notification: $e');
+    }
+  }
+
+  /// Show a notification with progress bar.
+  static Future<void> showProgressNotification({
+    required String title,
+    required String body,
+    required int progress,
+    required int maxProgress,
+    int id = 0,
+    bool indeterminate = false,
+  }) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'progress_notification',
+        'Progress Notifications',
+        channelDescription: 'Channel for progress notifications',
+        importance: Importance.low,
+        priority: Priority.low,
+        showProgress: true,
+        maxProgress: maxProgress,
+        progress: progress,
+        indeterminate: indeterminate,
+        ongoing: progress < maxProgress,
+        autoCancel: progress >= maxProgress,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      final iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+      );
+
+      await _notification.show(
+        id,
+        title,
+        body,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+      );
+
+      log('Progress notification shown: $progress/$maxProgress');
+    } catch (e) {
+      log('Error showing progress notification: $e');
+    }
+  }
+
   /// Helper function to build notification details for both platforms.
   static NotificationDetails _buildNotificationDetails({
     required String channelId,

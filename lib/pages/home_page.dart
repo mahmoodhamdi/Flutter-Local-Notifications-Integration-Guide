@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications_feature/helpers/notification_helper.
 import 'package:flutter_local_notifications_feature/helpers/permission_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/show_snack_bar_helper.dart';
 import 'package:flutter_local_notifications_feature/pages/notification_page.dart';
+import 'package:flutter_local_notifications_feature/pages/pending_notifications_page.dart';
 import 'package:flutter_local_notifications_feature/widgets/header_card.dart';
 import 'package:flutter_local_notifications_feature/widgets/notification_button.dart';
 
@@ -205,6 +206,16 @@ class _MyHomePageState extends State<MyHomePage> {
     showSnackBar(context: context, message: 'All notifications canceled');
   }
 
+  /// Navigate to pending notifications page.
+  void _viewPendingNotifications() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PendingNotificationsPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,6 +228,13 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.schedule),
+            onPressed: _viewPendingNotifications,
+            tooltip: 'View Pending Notifications',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -226,24 +244,36 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               // Using the HeaderCard widget
               const HeaderCard(),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
 
-              // Notification buttons
+              // Notification buttons with icons
               NotificationButton(
+                icon: Icons.notifications_active,
                 label: 'Basic Notification',
                 onPressed: _showBasicNotification,
               ),
               NotificationButton(
+                icon: Icons.repeat,
                 label: 'Repeating Notification',
                 onPressed: _showRepeatingNotification,
               ),
               NotificationButton(
+                icon: Icons.schedule,
                 label: 'Schedule Notification',
                 onPressed: _scheduleNotification,
               ),
               NotificationButton(
+                icon: Icons.list_alt,
+                label: 'View Pending Notifications',
+                onPressed: _viewPendingNotifications,
+                backgroundColor: Colors.teal,
+              ),
+              const SizedBox(height: 8),
+              NotificationButton(
+                icon: Icons.clear_all,
                 label: 'Remove All Notifications',
                 onPressed: _cancelAllNotifications,
+                backgroundColor: Colors.red[400],
               ),
             ],
           ),
