@@ -27,10 +27,11 @@ A comprehensive guide and demo application for integrating local notifications i
 - [x] Grouped notifications with inbox style
 - [x] Enhanced notification details page
 - [x] Notification history with search and filter
+- [x] Deep linking from notifications
+- [x] Media style notifications (for music/audio apps)
 
 ### Roadmap
-- [ ] Deep linking from notifications
-- [ ] Media style notifications
+All planned features have been implemented!
 
 ## Testing
 
@@ -357,12 +358,59 @@ await NotificationStorageHelper.markAsRead(notificationId);
 await NotificationStorageHelper.clearHistory();
 ```
 
+### Deep Linking
+
+```dart
+// Create payloads for deep linking
+final pagePayload = DeepLinkHelper.createPagePayload('history'); // Opens history page
+final messagePayload = DeepLinkHelper.createMessagePayload('123'); // Opens message
+final actionPayload = DeepLinkHelper.createActionPayload('reply', 'Hello');
+
+// Show notification with deep link
+await NotificationHelper.showBasicNotification(
+  id: 10,
+  title: "View History",
+  body: "Tap to see your notification history",
+  payload: pagePayload, // Will navigate to history page
+);
+
+// Handle deep links in your listener
+DeepLinkHelper.handleDeepLink(
+  context: context,
+  response: notificationResponse,
+);
+```
+
+### Media Style Notification
+
+```dart
+// Simple media notification (for music apps)
+await NotificationHelper.showSimpleMediaNotification(
+  id: 999,
+  songTitle: "Beautiful Day",
+  artist: "Artist Name",
+  album: "Album Name",
+  isPlaying: true,
+);
+
+// Full media notification with album art
+await NotificationHelper.showMediaNotification(
+  id: 999,
+  title: "Now Playing",
+  body: "Album Name",
+  artist: "Artist Name",
+  albumArt: "/path/to/album/art.jpg",
+  isPlaying: true,
+);
+```
+
 ## Project Structure
 
 ```
 lib/
 ├── main.dart                      # App entry point
 ├── helpers/
+│   ├── deep_link_helper.dart      # Deep linking from notifications
 │   ├── notification_helper.dart   # Core notification logic
 │   ├── notification_storage_helper.dart # History storage
 │   ├── permission_helper.dart     # Permission management
@@ -392,6 +440,7 @@ lib/
 | `progress_notification` | Progress bar notifications |
 | `action_notification` | Notifications with action buttons |
 | `grouped_notification` | Grouped/inbox style notifications |
+| `media_notification` | Media playback controls |
 
 ## Common Issues & Solutions
 

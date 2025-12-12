@@ -3,11 +3,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications_feature/helpers/deep_link_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/notification_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/permission_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/show_snack_bar_helper.dart';
 import 'package:flutter_local_notifications_feature/pages/notification_history_page.dart';
-import 'package:flutter_local_notifications_feature/pages/notification_page.dart';
 import 'package:flutter_local_notifications_feature/pages/pending_notifications_page.dart';
 import 'package:flutter_local_notifications_feature/widgets/header_card.dart';
 import 'package:flutter_local_notifications_feature/widgets/notification_button.dart';
@@ -49,26 +49,14 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  /// Handle notification tap - navigate to notification page.
+  /// Handle notification tap - use deep link helper for navigation.
   void _handleNotificationTap(NotificationResponse response) {
     if (!mounted) return;
 
-    // Get input text from reply action if available
-    String? inputText;
-    if (response.input != null && response.input!.isNotEmpty) {
-      inputText = response.input;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NotificationPage(
-          payload: response.payload,
-          notificationId: response.id,
-          actionId: response.actionId,
-          inputText: inputText,
-        ),
-      ),
+    // Use DeepLinkHelper for smart navigation based on payload
+    DeepLinkHelper.handleDeepLink(
+      context: context,
+      response: response,
     );
   }
 
@@ -234,6 +222,19 @@ class _MyHomePageState extends State<MyHomePage> {
     showSnackBar(context: context, message: 'Grouped notifications shown');
   }
 
+  /// Show media style notification.
+  void _showMediaNotification() {
+    NotificationHelper.showSimpleMediaNotification(
+      id: 999,
+      songTitle: 'Ya Rab El Alamin',
+      artist: 'Maher Zain',
+      album: 'Islamic Songs',
+      isPlaying: true,
+      payload: DeepLinkHelper.createActionPayload('media', 'playing'),
+    );
+    showSnackBar(context: context, message: 'Media notification shown');
+  }
+
   /// Cancel all notifications.
   void _cancelAllNotifications() {
     NotificationHelper.cancelAllNotifications();
@@ -317,6 +318,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 label: 'Grouped Notifications',
                 onPressed: _showGroupedNotifications,
                 backgroundColor: Colors.indigo,
+              ),
+              NotificationButton(
+                icon: Icons.music_note,
+                label: 'Media Notification',
+                onPressed: _showMediaNotification,
+                backgroundColor: Colors.pink,
               ),
               NotificationButton(
                 icon: Icons.list_alt,

@@ -643,6 +643,132 @@ class NotificationHelper {
     }
   }
 
+  /// Show a media style notification (for music/audio apps).
+  /// This style is only fully supported on Android.
+  static Future<void> showMediaNotification({
+    required String title,
+    required String body,
+    required String artist,
+    int id = 0,
+    String? payload,
+    String? albumArt,
+    bool isPlaying = true,
+  }) async {
+    try {
+      // Media action buttons
+      final List<AndroidNotificationAction> actions = [
+        const AndroidNotificationAction(
+          'media_previous',
+          'Previous',
+          icon: DrawableResourceAndroidBitmap('@drawable/ic_skip_previous'),
+          showsUserInterface: false,
+        ),
+        AndroidNotificationAction(
+          isPlaying ? 'media_pause' : 'media_play',
+          isPlaying ? 'Pause' : 'Play',
+          icon: DrawableResourceAndroidBitmap(
+            isPlaying ? '@drawable/ic_pause' : '@drawable/ic_play',
+          ),
+          showsUserInterface: false,
+        ),
+        const AndroidNotificationAction(
+          'media_next',
+          'Next',
+          icon: DrawableResourceAndroidBitmap('@drawable/ic_skip_next'),
+          showsUserInterface: false,
+        ),
+      ];
+
+      final androidDetails = AndroidNotificationDetails(
+        'media_notification',
+        'Media Notifications',
+        channelDescription: 'Channel for media playback controls',
+        importance: Importance.low,
+        priority: Priority.low,
+        category: AndroidNotificationCategory.transport,
+        ongoing: isPlaying,
+        autoCancel: false,
+        showWhen: false,
+        actions: actions,
+        styleInformation: MediaStyleInformation(
+          htmlFormatContent: true,
+          htmlFormatTitle: true,
+        ),
+        icon: '@mipmap/ic_launcher',
+        largeIcon: albumArt != null
+            ? FilePathAndroidBitmap(albumArt)
+            : const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: false,
+        presentSound: false,
+      );
+
+      await _notification.show(
+        id,
+        title,
+        '$artist • $body',
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: payload,
+      );
+
+      log('Media notification shown: $title by $artist');
+    } catch (e) {
+      log('Error showing media notification: $e');
+    }
+  }
+
+  /// Show a simple media notification without custom icons.
+  /// Use this for a quick media notification without needing drawable resources.
+  static Future<void> showSimpleMediaNotification({
+    required String songTitle,
+    required String artist,
+    required String album,
+    int id = 0,
+    String? payload,
+    bool isPlaying = true,
+  }) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        'media_notification',
+        'Media Notifications',
+        channelDescription: 'Channel for media playback controls',
+        importance: Importance.low,
+        priority: Priority.low,
+        category: AndroidNotificationCategory.transport,
+        ongoing: isPlaying,
+        autoCancel: false,
+        showWhen: false,
+        subText: album,
+        styleInformation: MediaStyleInformation(
+          htmlFormatContent: true,
+          htmlFormatTitle: true,
+        ),
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: false,
+        presentSound: false,
+      );
+
+      await _notification.show(
+        id,
+        songTitle,
+        artist,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: payload ?? 'media:$songTitle',
+      );
+
+      log('Simple media notification shown: $songTitle by $artist');
+    } catch (e) {
+      log('Error showing simple media notification: $e');
+    }
+  }
+
   /// Helper function to build notification details for both platforms.
   static NotificationDetails _buildNotificationDetails({
     required String channelId,
