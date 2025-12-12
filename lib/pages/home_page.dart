@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications_feature/helpers/notification_helper.dart';
+import 'package:flutter_local_notifications_feature/helpers/permission_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/show_snack_bar_helper.dart';
 import 'package:flutter_local_notifications_feature/pages/notification_page.dart';
+import 'package:flutter_local_notifications_feature/widgets/header_card.dart';
 import 'package:flutter_local_notifications_feature/widgets/notification_button.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -15,70 +18,191 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  @override
-  initState() {
-    super.initState();
+  /// Subscription to notification tap events - must be cancelled in dispose()
+  StreamSubscription<NotificationResponse>? _notificationSubscription;
 
-    onNotificationTapListener();
+  /// Track if permissions have been requested
+  bool _permissionsRequested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNotificationListener();
+    _requestPermissions();
   }
 
-  void onNotificationTapListener() {
-    NotificationHelper.notificationResponseController.stream
-        .listen((notificationResponse) {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => NotificationPage()));
+  @override
+  void dispose() {
+    // IMPORTANT: Cancel subscription to prevent memory leaks
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Set up listener for notification tap events.
+  void _setupNotificationListener() {
+    _notificationSubscription =
+        NotificationHelper.notificationResponseController.stream
+            .listen((notificationResponse) {
+      _handleNotificationTap(notificationResponse);
     });
   }
 
+  /// Handle notification tap - navigate to notification page.
+  void _handleNotificationTap(NotificationResponse response) {
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NotificationPage(
+          payload: response.payload,
+          notificationId: response.id,
+        ),
+      ),
+    );
+  }
+
+  /// Request notification permissions on startup.
+  Future<void> _requestPermissions() async {
+    if (_permissionsRequested) return;
+    _permissionsRequested = true;
+
+    // Small delay to ensure the widget is fully mounted
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final granted = await PermissionHelper.requestNotificationPermissions();
+
+    if (!granted && mounted) {
+      showSnackBar(
+        context: context,
+        message: 'Please allow notifications to use this app.',
+        backgroundColor: Colors.orange,
+      );
+    } else if (granted && mounted) {
+      showSnackBar(
+        context: context,
+        message: 'Notifications enabled!',
+        backgroundColor: Colors.green,
+      );
+    }
+  }
+
+  /// Show date and time picker for scheduling notifications.
   Future<void> _scheduleNotification() async {
-    DateTime? pickedDate = await showDatePicker(
+    // Check permissions first
+    final canSchedule = await PermissionHelper.canScheduleExactAlarms();
+    if (!canSchedule) {
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          message: 'Please grant exact alarm permission to schedule notifications.',
+          backgroundColor: Colors.orange,
+        );
+      }
+      await PermissionHelper.requestNotificationPermissions();
+      return;
+    }
+
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
       firstDate: DateTime.now(),
-      lastDate: DateTime(DateTime.now().year + 300),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
       initialDate: DateTime.now(),
     );
 
-    if (pickedDate != null) {
-      TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.now(),
-      );
-
-      if (pickedTime != null) {
-        DateTime scheduledDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
-        );
-
-        int secondsUntilNotification =
-            scheduledDateTime.difference(DateTime.now()).inSeconds;
-
-        if (secondsUntilNotification > 0) {
-          NotificationHelper.showScheduleNotification(
-            delay: Duration(seconds: secondsUntilNotification),
-            id: Random().nextInt(4294967),
-            title: "Scheduled Notification",
-            body: "This is a scheduled notification",
-            payload: "payload",
-          );
-          showSnackBar(
-              context: context,
-              message: "Notification set for $scheduledDateTime");
-        } else {
-          showSnackBar(
-              context: context,
-              message:
-                  "The selected time is in the past. Please choose a future time.");
-        }
-      } else {
-        showSnackBar(context: context, message: "No time selected.");
+    if (pickedDate == null) {
+      if (mounted) {
+        showSnackBar(context: context, message: 'No date selected.');
       }
-    } else {
-      showSnackBar(context: context, message: "No date selected.");
+      return;
     }
+
+    if (!mounted) return;
+
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime == null) {
+      if (mounted) {
+        showSnackBar(context: context, message: 'No time selected.');
+      }
+      return;
+    }
+
+    final DateTime scheduledDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    final int secondsUntilNotification =
+        scheduledDateTime.difference(DateTime.now()).inSeconds;
+
+    if (secondsUntilNotification <= 0) {
+      if (mounted) {
+        showSnackBar(
+          context: context,
+          message: 'Please choose a future time.',
+          backgroundColor: Colors.red,
+        );
+      }
+      return;
+    }
+
+    await NotificationHelper.showScheduleNotification(
+      delay: Duration(seconds: secondsUntilNotification),
+      id: Random().nextInt(100000),
+      title: 'Scheduled Notification',
+      body: 'This notification was scheduled for ${_formatDateTime(scheduledDateTime)}',
+      payload: 'scheduled_${scheduledDateTime.millisecondsSinceEpoch}',
+    );
+
+    if (mounted) {
+      showSnackBar(
+        context: context,
+        message: 'Notification scheduled for ${_formatDateTime(scheduledDateTime)}',
+      );
+    }
+  }
+
+  /// Format DateTime for display.
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// Show basic notification.
+  void _showBasicNotification() {
+    NotificationHelper.showBasicNotification(
+      id: Random().nextInt(100000),
+      title: 'Basic Notification',
+      body: 'This is a basic notification example.',
+      payload: 'basic_notification',
+    );
+    showSnackBar(context: context, message: 'Basic notification shown');
+  }
+
+  /// Show repeating notification.
+  void _showRepeatingNotification() {
+    NotificationHelper.showRepeatingNotification(
+      id: Random().nextInt(100000),
+      title: 'Repeating Notification',
+      body: 'This notification repeats every minute.',
+      payload: 'repeating_notification',
+      repeatInterval: RepeatInterval.everyMinute,
+    );
+    showSnackBar(context: context, message: 'Repeating notification set');
+  }
+
+  /// Cancel all notifications.
+  void _cancelAllNotifications() {
+    NotificationHelper.cancelAllNotifications();
+    showSnackBar(context: context, message: 'All notifications canceled');
   }
 
   @override
@@ -100,74 +224,26 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Header Card
-              Card(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Manage Notifications",
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueGrey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "You can create, schedule, and manage notifications right here.",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              // Using the HeaderCard widget
+              const HeaderCard(),
               const SizedBox(height: 30),
+
               // Notification buttons
               NotificationButton(
-                label: "Basic Notification",
-                onPressed: () {
-                  NotificationHelper.showBasicNotification(
-                    id: Random().nextInt(429496),
-                    title: "Basic Notification",
-                    body: "This is a basic notification",
-                    payload: "payload",
-                  );
-                  showSnackBar(
-                      context: context, message: "Basic notification shown");
-                },
+                label: 'Basic Notification',
+                onPressed: _showBasicNotification,
               ),
               NotificationButton(
-                label: "Repeating Notification",
-                onPressed: () {
-                  NotificationHelper.showRepeatingNotification(
-                      id: Random().nextInt(4294967),
-                      title: "Repeating Notification",
-                      body: "This is a repeating notification",
-                      payload: "payload",
-                      repeatInterval: RepeatInterval.everyMinute);
-                  showSnackBar(
-                      context: context, message: "Repeating notification set");
-                },
+                label: 'Repeating Notification',
+                onPressed: _showRepeatingNotification,
               ),
               NotificationButton(
-                label: "Schedule Notification",
+                label: 'Schedule Notification',
                 onPressed: _scheduleNotification,
               ),
               NotificationButton(
-                label: "Remove Notifications",
-                onPressed: () {
-                  NotificationHelper.cancelAllNotifications();
-                  showSnackBar(
-                      context: context, message: "All notifications canceled");
-                },
+                label: 'Remove All Notifications',
+                onPressed: _cancelAllNotifications,
               ),
             ],
           ),
