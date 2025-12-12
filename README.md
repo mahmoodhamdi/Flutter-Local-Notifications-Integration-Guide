@@ -32,6 +32,21 @@ A comprehensive guide and demo application for integrating local notifications i
 - [ ] Notification history/log
 - [ ] Media style notifications
 
+## Testing
+
+This project includes comprehensive widget tests. Run tests with:
+
+```bash
+flutter test
+```
+
+Current test coverage includes:
+- NotificationButton widget tests
+- NotificationPage widget tests
+- PendingNotificationsPage widget tests
+- HeaderCard widget tests
+- Main app integration tests
+
 ## Requirements
 
 | Platform | Minimum Version |
