@@ -17,17 +17,17 @@ A comprehensive guide and demo application for integrating local notifications i
 - [x] Cancel all notifications
 - [x] Handle notification tap responses
 - [x] Stream-based notification event handling
+- [x] iOS full support with DarwinInitializationSettings
+- [x] Runtime permission requests (Android 13+)
+- [x] View pending/scheduled notifications list
+- [x] Cancel specific notification by ID
+- [x] Big picture notifications (file path & drawable)
+- [x] Progress bar notifications
 
 ### Roadmap
-- [ ] iOS full support with DarwinInitializationSettings
-- [ ] Runtime permission requests (Android 13+)
-- [ ] View pending/scheduled notifications list
-- [ ] Cancel specific notification by ID
-- [ ] Big picture notifications
-- [ ] Inbox style notifications
-- [ ] Progress bar notifications
-- [ ] Notification action buttons
+- [ ] Notification action buttons (Reply, Mark as Read)
 - [ ] Grouped notifications
+- [ ] Inbox style notifications
 - [ ] Deep linking from notifications
 - [ ] Notification history/log
 
@@ -214,22 +214,84 @@ NotificationHelper.showBasicNotification(
 );
 ```
 
+### Big Picture Notification
+
+```dart
+// From file path
+await NotificationHelper.showBigPictureNotification(
+  id: 5,
+  title: "New Photo",
+  body: "Check out this amazing picture!",
+  bigPicturePath: "/path/to/image.jpg",
+  summaryText: "Photo from vacation",
+);
+
+// From drawable resource
+await NotificationHelper.showBigPictureFromDrawable(
+  id: 6,
+  title: "App Update",
+  body: "New features available!",
+  drawableName: "update_banner",
+);
+```
+
+### Progress Notification
+
+```dart
+// Show progress (useful for downloads, uploads, etc.)
+for (int i = 0; i <= 100; i += 10) {
+  await NotificationHelper.showProgressNotification(
+    id: 7,
+    title: "Downloading...",
+    body: "$i% complete",
+    progress: i,
+    maxProgress: 100,
+  );
+  await Future.delayed(Duration(milliseconds: 500));
+}
+
+// Indeterminate progress (unknown duration)
+await NotificationHelper.showProgressNotification(
+  id: 8,
+  title: "Processing...",
+  body: "Please wait",
+  progress: 0,
+  maxProgress: 100,
+  indeterminate: true,
+);
+```
+
+### View Pending Notifications
+
+```dart
+// Get list of scheduled notifications
+final pendingNotifications = await NotificationHelper.getPendingNotifications();
+for (final notification in pendingNotifications) {
+  print('ID: ${notification.id}, Title: ${notification.title}');
+}
+
+// Cancel specific notification
+await NotificationHelper.cancelNotification(notificationId);
+```
+
 ## Project Structure
 
 ```
 lib/
-├── main.dart                 # App entry point
+├── main.dart                      # App entry point
 ├── helpers/
 │   ├── notification_helper.dart   # Core notification logic
+│   ├── permission_helper.dart     # Permission management
 │   └── show_snack_bar_helper.dart # UI helper
 ├── pages/
-│   ├── home_page.dart        # Main UI with buttons
-│   └── notification_page.dart # Notification details
+│   ├── home_page.dart             # Main UI with buttons
+│   ├── notification_page.dart     # Notification details
+│   └── pending_notifications_page.dart # View scheduled notifications
 ├── widgets/
-│   ├── notification_button.dart
-│   └── header_card.dart
+│   ├── notification_button.dart   # Reusable button with icon
+│   └── header_card.dart           # Header card widget
 └── theme/
-    └── theme.dart            # App theming
+    └── theme.dart                 # App theming
 ```
 
 ## Notification Channels
@@ -239,6 +301,8 @@ lib/
 | `basic_notification` | Instant notifications |
 | `repeating_notification` | Periodic notifications |
 | `schedule_notification` | Time-scheduled notifications |
+| `big_picture_notification` | Notifications with images |
+| `progress_notification` | Progress bar notifications |
 
 ## Common Issues & Solutions
 
