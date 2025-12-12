@@ -26,10 +26,10 @@ A comprehensive guide and demo application for integrating local notifications i
 - [x] Notification action buttons (Reply, Mark as Read, Dismiss)
 - [x] Grouped notifications with inbox style
 - [x] Enhanced notification details page
+- [x] Notification history with search and filter
 
 ### Roadmap
 - [ ] Deep linking from notifications
-- [ ] Notification history/log
 - [ ] Media style notifications
 
 ## Testing
@@ -338,6 +338,25 @@ await NotificationHelper.showGroupedNotification(
 );
 ```
 
+### Notification History
+
+```dart
+// Get notification history
+final history = await NotificationStorageHelper.getNotificationHistory();
+
+// Search notifications
+final results = await NotificationStorageHelper.searchNotifications('meeting');
+
+// Get unread count
+final unreadCount = await NotificationStorageHelper.getUnreadCount();
+
+// Mark as read
+await NotificationStorageHelper.markAsRead(notificationId);
+
+// Clear all history
+await NotificationStorageHelper.clearHistory();
+```
+
 ## Project Structure
 
 ```
@@ -345,10 +364,14 @@ lib/
 ├── main.dart                      # App entry point
 ├── helpers/
 │   ├── notification_helper.dart   # Core notification logic
+│   ├── notification_storage_helper.dart # History storage
 │   ├── permission_helper.dart     # Permission management
 │   └── show_snack_bar_helper.dart # UI helper
+├── models/
+│   └── notification_record.dart   # Notification history model
 ├── pages/
 │   ├── home_page.dart             # Main UI with buttons
+│   ├── notification_history_page.dart # View notification history
 │   ├── notification_page.dart     # Notification details
 │   └── pending_notifications_page.dart # View scheduled notifications
 ├── widgets/

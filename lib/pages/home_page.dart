@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_local_notifications_feature/helpers/notification_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/permission_helper.dart';
 import 'package:flutter_local_notifications_feature/helpers/show_snack_bar_helper.dart';
+import 'package:flutter_local_notifications_feature/pages/notification_history_page.dart';
 import 'package:flutter_local_notifications_feature/pages/notification_page.dart';
 import 'package:flutter_local_notifications_feature/pages/pending_notifications_page.dart';
 import 'package:flutter_local_notifications_feature/widgets/header_card.dart';
@@ -249,6 +250,16 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  /// Navigate to notification history page.
+  void _viewNotificationHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const NotificationHistoryPage(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -312,6 +323,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 label: 'View Pending Notifications',
                 onPressed: _viewPendingNotifications,
                 backgroundColor: Colors.teal,
+              ),
+              NotificationButton(
+                icon: Icons.history,
+                label: 'Notification History',
+                onPressed: _viewNotificationHistory,
+                backgroundColor: Colors.amber[700],
               ),
               const SizedBox(height: 8),
               NotificationButton(

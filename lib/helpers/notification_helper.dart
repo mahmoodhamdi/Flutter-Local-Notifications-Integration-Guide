@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications_feature/helpers/notification_storage_helper.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -107,6 +108,16 @@ class NotificationHelper {
           soundName: soundName,
         ),
       );
+
+      // Save to history
+      await NotificationStorageHelper.saveNotification(
+        id: id,
+        title: title,
+        body: body,
+        payload: payload,
+        type: 'basic',
+      );
+
       log('Basic notification shown: $title');
     } catch (e) {
       log('Error showing basic notification: $e');
@@ -143,6 +154,16 @@ class NotificationHelper {
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+
+      // Save to history
+      await NotificationStorageHelper.saveNotification(
+        id: id,
+        title: title,
+        body: body,
+        payload: payload,
+        type: 'repeating',
+      );
+
       log('Repeating notification shown: $title');
     } catch (e) {
       log('Error showing repeating notification: $e');
@@ -181,6 +202,16 @@ class NotificationHelper {
         payload: payload,
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
+
+      // Save to history
+      await NotificationStorageHelper.saveNotification(
+        id: id,
+        title: title,
+        body: body,
+        payload: payload,
+        type: 'scheduled',
+      );
+
       log('Scheduled notification for: $scheduledDate');
     } catch (e) {
       log('Error scheduling notification: $e');
@@ -489,6 +520,15 @@ class NotificationHelper {
         payload: payload,
       );
 
+      // Save to history
+      await NotificationStorageHelper.saveNotification(
+        id: id,
+        title: title,
+        body: body,
+        payload: payload,
+        type: 'action',
+      );
+
       log('Notification with actions shown: $title');
     } catch (e) {
       log('Error showing notification with actions: $e');
@@ -543,6 +583,17 @@ class NotificationHelper {
         NotificationDetails(android: androidDetails, iOS: iosDetails),
         payload: payload,
       );
+
+      // Save to history (only for non-summary notifications)
+      if (!isSummary) {
+        await NotificationStorageHelper.saveNotification(
+          id: id,
+          title: title,
+          body: body,
+          payload: payload,
+          type: 'grouped',
+        );
+      }
 
       log('Grouped notification shown: $title (summary: $isSummary)');
     } catch (e) {
