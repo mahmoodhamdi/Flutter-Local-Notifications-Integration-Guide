@@ -23,13 +23,14 @@ A comprehensive guide and demo application for integrating local notifications i
 - [x] Cancel specific notification by ID
 - [x] Big picture notifications (file path & drawable)
 - [x] Progress bar notifications
+- [x] Notification action buttons (Reply, Mark as Read, Dismiss)
+- [x] Grouped notifications with inbox style
+- [x] Enhanced notification details page
 
 ### Roadmap
-- [ ] Notification action buttons (Reply, Mark as Read)
-- [ ] Grouped notifications
-- [ ] Inbox style notifications
 - [ ] Deep linking from notifications
 - [ ] Notification history/log
+- [ ] Media style notifications
 
 ## Requirements
 
@@ -274,6 +275,54 @@ for (final notification in pendingNotifications) {
 await NotificationHelper.cancelNotification(notificationId);
 ```
 
+### Notification with Action Buttons
+
+```dart
+// Show notification with Reply, Mark as Read, and Dismiss buttons
+await NotificationHelper.showNotificationWithActions(
+  id: 9,
+  title: "New Message",
+  body: "You have a new message from Ahmed",
+  payload: "message_123",
+  showReplyAction: true,
+  showMarkReadAction: true,
+);
+
+// Handle action responses in your listener
+NotificationHelper.notificationResponseController.stream.listen((response) {
+  if (response.actionId == NotificationHelper.actionReply) {
+    final replyText = response.input;
+    print('User replied: $replyText');
+  } else if (response.actionId == NotificationHelper.actionMarkRead) {
+    print('Marked as read');
+  }
+});
+```
+
+### Grouped Notifications
+
+```dart
+// Show multiple notifications grouped together
+await NotificationHelper.showNotificationGroup(
+  groupKey: 'messages_group',
+  summaryTitle: 'New Messages',
+  notifications: [
+    {'title': 'Ahmed', 'body': 'Hey, how are you?'},
+    {'title': 'Sara', 'body': 'Meeting at 3 PM'},
+    {'title': 'Ali', 'body': 'Check this out!'},
+  ],
+);
+
+// Or show individual grouped notifications
+await NotificationHelper.showGroupedNotification(
+  groupKey: 'emails_group',
+  title: 'New Email',
+  body: 'You have a new email from support',
+  id: 100,
+  isSummary: false,
+);
+```
+
 ## Project Structure
 
 ```
@@ -303,6 +352,8 @@ lib/
 | `schedule_notification` | Time-scheduled notifications |
 | `big_picture_notification` | Notifications with images |
 | `progress_notification` | Progress bar notifications |
+| `action_notification` | Notifications with action buttons |
+| `grouped_notification` | Grouped/inbox style notifications |
 
 ## Common Issues & Solutions
 

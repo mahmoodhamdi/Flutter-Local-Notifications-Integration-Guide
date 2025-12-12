@@ -414,6 +414,184 @@ class NotificationHelper {
     }
   }
 
+  /// Action IDs for notification buttons
+  static const String actionReply = 'reply_action';
+  static const String actionMarkRead = 'mark_read_action';
+  static const String actionDismiss = 'dismiss_action';
+
+  /// Show a notification with action buttons.
+  /// Actions are only supported on Android.
+  static Future<void> showNotificationWithActions({
+    required String title,
+    required String body,
+    int id = 0,
+    String? payload,
+    bool showReplyAction = true,
+    bool showMarkReadAction = true,
+  }) async {
+    try {
+      final List<AndroidNotificationAction> actions = [];
+
+      if (showReplyAction) {
+        actions.add(
+          AndroidNotificationAction(
+            actionReply,
+            'Reply',
+            inputs: [
+              const AndroidNotificationActionInput(
+                label: 'Type a message...',
+              ),
+            ],
+            showsUserInterface: true,
+          ),
+        );
+      }
+
+      if (showMarkReadAction) {
+        actions.add(
+          const AndroidNotificationAction(
+            actionMarkRead,
+            'Mark as Read',
+            cancelNotification: true,
+          ),
+        );
+      }
+
+      actions.add(
+        const AndroidNotificationAction(
+          actionDismiss,
+          'Dismiss',
+          cancelNotification: true,
+        ),
+      );
+
+      final androidDetails = AndroidNotificationDetails(
+        'action_notification',
+        'Action Notifications',
+        channelDescription: 'Channel for notifications with action buttons',
+        importance: Importance.max,
+        priority: Priority.high,
+        actions: actions,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      await _notification.show(
+        id,
+        title,
+        body,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: payload,
+      );
+
+      log('Notification with actions shown: $title');
+    } catch (e) {
+      log('Error showing notification with actions: $e');
+    }
+  }
+
+  /// Show grouped notifications (summary + individual).
+  /// [groupKey] is used to group related notifications.
+  static Future<void> showGroupedNotification({
+    required String groupKey,
+    required String title,
+    required String body,
+    required int id,
+    String? payload,
+    bool isSummary = false,
+    List<String>? inboxLines,
+  }) async {
+    try {
+      StyleInformation? styleInformation;
+
+      if (isSummary && inboxLines != null && inboxLines.isNotEmpty) {
+        styleInformation = InboxStyleInformation(
+          inboxLines,
+          contentTitle: title,
+          summaryText: '${inboxLines.length} messages',
+        );
+      }
+
+      final androidDetails = AndroidNotificationDetails(
+        'grouped_notification',
+        'Grouped Notifications',
+        channelDescription: 'Channel for grouped notifications',
+        importance: Importance.max,
+        priority: Priority.high,
+        groupKey: groupKey,
+        setAsGroupSummary: isSummary,
+        styleInformation: styleInformation,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        threadIdentifier: 'grouped_thread',
+      );
+
+      await _notification.show(
+        id,
+        title,
+        body,
+        NotificationDetails(android: androidDetails, iOS: iosDetails),
+        payload: payload,
+      );
+
+      log('Grouped notification shown: $title (summary: $isSummary)');
+    } catch (e) {
+      log('Error showing grouped notification: $e');
+    }
+  }
+
+  /// Show multiple notifications as a group with a summary.
+  /// This is a convenience method that creates both individual and summary notifications.
+  static Future<void> showNotificationGroup({
+    required String groupKey,
+    required List<Map<String, String>> notifications,
+    required String summaryTitle,
+    int startId = 1000,
+  }) async {
+    try {
+      // Show individual notifications
+      for (int i = 0; i < notifications.length; i++) {
+        final notification = notifications[i];
+        await showGroupedNotification(
+          groupKey: groupKey,
+          title: notification['title'] ?? 'Notification',
+          body: notification['body'] ?? '',
+          id: startId + i,
+          payload: notification['payload'],
+          isSummary: false,
+        );
+      }
+
+      // Show summary notification
+      final inboxLines = notifications
+          .map((n) => '${n['title']}: ${n['body']}')
+          .toList();
+
+      await showGroupedNotification(
+        groupKey: groupKey,
+        title: summaryTitle,
+        body: '${notifications.length} new notifications',
+        id: startId + notifications.length,
+        isSummary: true,
+        inboxLines: inboxLines,
+      );
+
+      log('Notification group shown: $summaryTitle with ${notifications.length} items');
+    } catch (e) {
+      log('Error showing notification group: $e');
+    }
+  }
+
   /// Helper function to build notification details for both platforms.
   static NotificationDetails _buildNotificationDetails({
     required String channelId,

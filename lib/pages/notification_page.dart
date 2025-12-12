@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 class NotificationPage extends StatelessWidget {
   final String? payload;
   final int? notificationId;
+  final String? actionId;
+  final String? inputText;
 
   const NotificationPage({
     super.key,
     this.payload,
     this.notificationId,
+    this.actionId,
+    this.inputText,
   });
 
   @override
@@ -73,6 +77,26 @@ class NotificationPage extends StatelessWidget {
                       label: 'Payload',
                       value: payload ?? 'No payload',
                     ),
+
+                    // Action ID (if from action button)
+                    if (actionId != null) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        icon: Icons.touch_app,
+                        label: 'Action',
+                        value: _getActionLabel(actionId!),
+                      ),
+                    ],
+
+                    // Input text (if from reply action)
+                    if (inputText != null && inputText!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoRow(
+                        icon: Icons.message,
+                        label: 'Reply Text',
+                        value: inputText!,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -120,6 +144,20 @@ class NotificationPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Get human-readable label for action ID.
+  String _getActionLabel(String actionId) {
+    switch (actionId) {
+      case 'reply_action':
+        return 'Reply';
+      case 'mark_read_action':
+        return 'Mark as Read';
+      case 'dismiss_action':
+        return 'Dismiss';
+      default:
+        return actionId;
+    }
   }
 
   Widget _buildInfoRow({

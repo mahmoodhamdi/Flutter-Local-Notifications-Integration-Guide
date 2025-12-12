@@ -52,12 +52,20 @@ class _MyHomePageState extends State<MyHomePage> {
   void _handleNotificationTap(NotificationResponse response) {
     if (!mounted) return;
 
+    // Get input text from reply action if available
+    String? inputText;
+    if (response.input != null && response.input!.isNotEmpty) {
+      inputText = response.input;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => NotificationPage(
           payload: response.payload,
           notificationId: response.id,
+          actionId: response.actionId,
+          inputText: inputText,
         ),
       ),
     );
@@ -200,6 +208,31 @@ class _MyHomePageState extends State<MyHomePage> {
     showSnackBar(context: context, message: 'Repeating notification set');
   }
 
+  /// Show notification with action buttons.
+  void _showActionNotification() {
+    NotificationHelper.showNotificationWithActions(
+      id: Random().nextInt(100000),
+      title: 'New Message',
+      body: 'You have a new message. Tap to reply!',
+      payload: 'action_notification',
+    );
+    showSnackBar(context: context, message: 'Action notification shown');
+  }
+
+  /// Show grouped notifications.
+  void _showGroupedNotifications() {
+    NotificationHelper.showNotificationGroup(
+      groupKey: 'messages_group',
+      summaryTitle: 'New Messages',
+      notifications: [
+        {'title': 'Ahmed', 'body': 'Hey, how are you?'},
+        {'title': 'Sara', 'body': 'Meeting at 3 PM'},
+        {'title': 'Ali', 'body': 'Check this out!'},
+      ],
+    );
+    showSnackBar(context: context, message: 'Grouped notifications shown');
+  }
+
   /// Cancel all notifications.
   void _cancelAllNotifications() {
     NotificationHelper.cancelAllNotifications();
@@ -261,6 +294,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 icon: Icons.schedule,
                 label: 'Schedule Notification',
                 onPressed: _scheduleNotification,
+              ),
+              NotificationButton(
+                icon: Icons.touch_app,
+                label: 'Action Notification',
+                onPressed: _showActionNotification,
+                backgroundColor: Colors.purple,
+              ),
+              NotificationButton(
+                icon: Icons.group_work,
+                label: 'Grouped Notifications',
+                onPressed: _showGroupedNotifications,
+                backgroundColor: Colors.indigo,
               ),
               NotificationButton(
                 icon: Icons.list_alt,
