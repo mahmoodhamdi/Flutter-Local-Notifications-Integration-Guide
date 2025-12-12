@@ -1,86 +1,78 @@
-# 🚀 Flutter Local Notifications Integration Guide
+# Flutter Local Notifications Integration Guide
 
-Welcome to the **Flutter Local Notifications Integration Guide**! This resource is crafted to help developers seamlessly add local notifications to their Flutter applications. Whether you're looking to send alerts, reminders, or messages, this guide provides everything you need—from setup to advanced customization.
+A comprehensive guide and demo application for integrating local notifications in Flutter apps. This project serves as a practical reference for developers looking to implement notifications on both Android and iOS platforms.
 
-## 📋 Key Features
+[![Flutter](https://img.shields.io/badge/Flutter-3.6+-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.6+-0175C2?logo=dart)](https://dart.dev)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-- Comprehensive setup instructions for Android and iOS
-- Code examples for both basic and advanced notifications
-- Best practices for notification management and user engagement
-- Troubleshooting tips and common pitfalls to avoid
+## Features
 
-## ✨ Features
-
-### Implemented Features
-
-- [x] Display basic notifications
-- [x] Schedule notifications
-- [x] Customize notification appearance (title, body, icon)
-- [x] Cancel all notifications
-- [x] Periodic notifications
+### Implemented
+- [x] Basic instant notifications
+- [x] Scheduled notifications with date/time picker
+- [x] Repeating/periodic notifications
 - [x] Custom notification sounds
-- [x] Handle notification taps and responses
+- [x] Cancel all notifications
+- [x] Handle notification tap responses
+- [x] Stream-based notification event handling
 
-### Future Enhancements
-
-- [ ] Schedule repeating notifications
-- [ ] Group notifications
-- [ ] Progress notifications
-- [ ] Media style notifications
+### Roadmap
+- [ ] iOS full support with DarwinInitializationSettings
+- [ ] Runtime permission requests (Android 13+)
+- [ ] View pending/scheduled notifications list
+- [ ] Cancel specific notification by ID
 - [ ] Big picture notifications
 - [ ] Inbox style notifications
-- [ ] iOS-specific features (attachments, critical alerts)
-- [ ] Notification actions and buttons
+- [ ] Progress bar notifications
+- [ ] Notification action buttons
+- [ ] Grouped notifications
+- [ ] Deep linking from notifications
+- [ ] Notification history/log
 
----
+## Requirements
 
-## 🚀 Getting Started
+| Platform | Minimum Version |
+|----------|-----------------|
+| Flutter SDK | 3.6.0+ |
+| Dart SDK | 3.6.0+ |
+| Android | API 21 (Android 5.0) |
+| iOS | 13.0+ |
 
-Integrating local notifications into your Flutter project is easy! Follow the steps below to get started.
+## Quick Start
 
-### 1. Add the `flutter_local_notifications` Package
-
-Add the package to your **pubspec.yaml** file:
+### 1. Add Dependencies
 
 ```yaml
 dependencies:
-  flutter:
-    sdk: flutter
-  flutter_local_notifications: latest_version
-  timezone: latest_version
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.0
 ```
-
-Install the package by running:
 
 ```bash
 flutter pub get
 ```
 
-### 2. Android Configuration
+### 2. Android Setup
 
-#### Add Permissions
-
-Edit your **android/app/src/main/AndroidManifest.xml** file to include the necessary permissions:
-
-**Note:** Add these permissions above the `<application>` tag.
+#### AndroidManifest.xml
+Add permissions above the `<application>` tag:
 
 ```xml
 <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-<!-- Other permissions if necessary -->
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 ```
 
-- `android.permission.RECEIVE_BOOT_COMPLETED`: Ensures notifications are rescheduled after device reboot.
-- `android.permission.SCHEDULE_EXACT_ALARM`: Allows for precise alarm scheduling.
-
-#### Add Receivers
-
-Insert the following receivers before the end of the `<application>` tag:
+Add receivers inside `<application>` tag:
 
 ```xml
-<meta-data android:name="flutterEmbedding" android:value="2" />
-<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
-<receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
     <intent-filter>
         <action android:name="android.intent.action.BOOT_COMPLETED"/>
         <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
@@ -90,184 +82,216 @@ Insert the following receivers before the end of the `<application>` tag:
 </receiver>
 ```
 
-### 3. Gradle Setup
-
-For scheduled notifications to be compatible with older Android versions, you need to enable **desugaring**. Update your application's Gradle file `android/app/build.gradle` as follows:
-
-```gradle
-android {
-  defaultConfig {
-    multiDexEnabled true
-  }
-
-  compileOptions {
-    coreLibraryDesugaringEnabled true
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
-}
-
-dependencies {
-  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
-}
-```
-
-Make sure your project is using **Android Gradle Plugin 7.3.1 or higher**.
-
-If your Flutter app crashes on Android 12L or later when desugaring is enabled, you may need to add the following dependencies:
-
-```gradle
-dependencies {
-    implementation 'androidx.window:window:1.0.0'
-    implementation 'androidx.window:window-java:1.0.0'
-}
-```
-
-Additionally, ensure your `compileSdk` is set to at least 34 in your Gradle configuration:
+#### build.gradle (app level)
+Enable desugaring for scheduled notifications:
 
 ```gradle
 android {
-    compileSdk 34
+    compileSdk = 35
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        minSdk = 21
+        targetSdk = 35
+        multiDexEnabled true
+    }
+}
+
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
 ```
 
-### 4. Custom Notification Sound Setup
-
-You can now customize notification sounds with this setup.
-
-#### Add Sound File
-
-Add your custom notification sound file to the following locations in your project:
-
-- **Flutter assets**: Place your sound file in `assets/audio/`
-- **Android raw resources**: Add your sound file to `android/app/src/main/res/raw/`
-
-Ensure that the sound file follows these conditions:
-
-- File format: `.mp3`
-- File name: Use lowercase letters and underscores (e.g., `yaamsallyallaelnaby.mp3`).
-
-#### Update `pubspec.yaml`
-
-Configure the sound asset in your `pubspec.yaml` file under the `assets` section:
-
-```yaml
-flutter:
-  assets:
-    - assets/audio/
-```
-
-#### Custom Sound Notification
-
-The custom sound feature is already integrated into the notification helper function. By default, the notification will play the custom sound file `yaamsallyallaelnaby.mp3`. You can specify the sound file or let it use the default one as follows:
+### 3. Initialize Notifications
 
 ```dart
-NotificationHelper.showBasicNotification(
-  id: Random().nextInt(1 << 32),
-  title: "Custom Sound Notification",
-  body: "This notification has a custom sound!",
-  sound: RawResourceAndroidNotificationSound('yaamsallyallaelnaby'),
-);
-```
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 
-If no sound is provided, the default sound (`yaamsallyallaelnaby.mp3`) will be used.
-
----
-
-### 5. Initialize Notifications and Time Zones
-
-You must initialize the notification plugin along with time zone settings.
-
-#### Initialization
-
-In your `NotificationHelper`, initialize the notification settings and time zones as shown below:
-
-```dart
 class NotificationHelper {
   static final FlutterLocalNotificationsPlugin _notification =
       FlutterLocalNotificationsPlugin();
 
-  /// Initialize the notification settings and time zones.
   static Future<void> init() async {
-    try {
-      const androidSettings =
-          AndroidInitializationSettings("@mipmap/ic_launcher");
-      const initSettings = InitializationSettings(android: androidSettings);
-      await _notification.initialize(
-        initSettings,
-        onDidReceiveBackgroundNotificationResponse: onNotificationTap,
-        onDidReceiveNotificationResponse: onNotificationTap,
-      );
-      tz.initializeTimeZones();
-    } catch (e) {
-      log("Error initializing notifications: $e");
-    }
+    // Android settings
+    const androidSettings = AndroidInitializationSettings("@mipmap/ic_launcher");
+
+    // iOS settings (recommended)
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+
+    await _notification.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: onNotificationTap,
+      onDidReceiveBackgroundNotificationResponse: onNotificationTap,
+    );
+
+    tz.initializeTimeZones();
   }
 }
 ```
 
-### 6. Handle Notification Taps
+## Usage Examples
 
-You can now respond to user interactions when they tap on notifications. The tap listener and response handlers are integrated into the notification helper. This allows you to perform actions like navigation when the notification is tapped.
-
-#### Setup the Notification Tap Listener
-
-Set up a tap listener to perform actions when a user taps on a notification:
+### Basic Notification
 
 ```dart
-class NotificationHelper {
-  static StreamController<NotificationResponse> notificationResponseController =
-      StreamController<NotificationResponse>.broadcast();
-
-  /// Add the response to the stream on notification tap.
-  static void onNotificationTap(
-    NotificationResponse notificationResponse,
-  ) {
-    notificationResponseController.add(notificationResponse);
-  }
-
-  void onNotificationTapListener() {
-    NotificationHelper.notificationResponseController.stream
-        .listen((notificationResponse) {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => NotificationPage()));
-    });
-  }
-}
+await NotificationHelper.showBasicNotification(
+  id: 1,
+  title: "Hello!",
+  body: "This is a basic notification",
+  payload: "custom_data",
+);
 ```
 
-Make sure you initialize this listener in your `initState`:
+### Scheduled Notification
+
+```dart
+await NotificationHelper.showScheduleNotification(
+  id: 2,
+  title: "Reminder",
+  body: "Don't forget your task!",
+  delay: Duration(hours: 1),
+);
+```
+
+### Repeating Notification
+
+```dart
+await NotificationHelper.showRepeatingNotification(
+  id: 3,
+  title: "Daily Reminder",
+  body: "Time to check in!",
+  repeatInterval: RepeatInterval.daily,
+);
+```
+
+### Handle Notification Taps
 
 ```dart
 @override
 void initState() {
   super.initState();
-  onNotificationTapListener();  // Listen for notification taps
+  _subscription = NotificationHelper.notificationResponseController.stream
+      .listen((response) {
+        // Navigate or handle the tap
+        Navigator.push(context, MaterialPageRoute(
+          builder: (context) => NotificationDetailsPage(payload: response.payload),
+        ));
+      });
+}
+
+@override
+void dispose() {
+  _subscription?.cancel(); // Important: prevent memory leaks!
+  super.dispose();
 }
 ```
 
-This will navigate to a specific page when the user taps on the notification.
+### Custom Sound
 
-## 🎉 Congratulations
+Place your sound file in `android/app/src/main/res/raw/` (e.g., `custom_sound.mp3`)
 
-You’ve successfully integrated local notifications into your Flutter app! For more advanced features and customization options, be sure to check out the official [Flutter Local Notifications Plugin Documentation](https://pub.dev/packages/flutter_local_notifications).
+```dart
+NotificationHelper.showBasicNotification(
+  id: 4,
+  title: "Custom Sound",
+  body: "This notification has a custom sound!",
+  sound: RawResourceAndroidNotificationSound('custom_sound'), // No extension!
+);
+```
 
-If you found this guide helpful, don’t forget to ⭐ star this repository on GitHub to show your support!
+## Project Structure
 
-Thank you for reading!
+```
+lib/
+├── main.dart                 # App entry point
+├── helpers/
+│   ├── notification_helper.dart   # Core notification logic
+│   └── show_snack_bar_helper.dart # UI helper
+├── pages/
+│   ├── home_page.dart        # Main UI with buttons
+│   └── notification_page.dart # Notification details
+├── widgets/
+│   ├── notification_button.dart
+│   └── header_card.dart
+└── theme/
+    └── theme.dart            # App theming
+```
 
----
+## Notification Channels
 
-### 📝 License
+| Channel ID | Purpose |
+|------------|---------|
+| `basic_notification` | Instant notifications |
+| `repeating_notification` | Periodic notifications |
+| `schedule_notification` | Time-scheduled notifications |
+
+## Common Issues & Solutions
+
+### Notifications not showing on Android 13+
+Request POST_NOTIFICATIONS permission at runtime:
+```dart
+final plugin = FlutterLocalNotificationsPlugin();
+await plugin.resolvePlatformSpecificImplementation<
+    AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+```
+
+### Scheduled notifications not working
+1. Ensure desugaring is enabled in build.gradle
+2. Call `tz.initializeTimeZones()` before scheduling
+3. Check that `SCHEDULE_EXACT_ALARM` permission is granted
+
+### Custom sound not playing
+1. File must be in `res/raw/` folder
+2. Use lowercase filename with underscores
+3. Don't include file extension in code
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Resources
+
+- [flutter_local_notifications Documentation](https://pub.dev/packages/flutter_local_notifications)
+- [Flutter Official Documentation](https://docs.flutter.dev/)
+- [Android Notification Guide](https://developer.android.com/develop/ui/views/notifications)
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### 🤝 Contributing
+## Author
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+**Mahmoud Hamdy**
+- GitHub: [@mahmoodhamdi](https://github.com/mahmoodhamdi)
+- Email: hmdy7486@gmail.com
 
-### Qoute
+---
 
-مَن قالَ: لا إلَهَ إلَّا اللَّهُ، وحْدَهُ لا شَرِيكَ له، له المُلْكُ وله الحَمْدُ، وهو علَى كُلِّ شَيءٍ قَدِيرٌ، في يَومٍ مِئَةَ مَرَّةٍ؛ كانَتْ له عَدْلَ عَشْرِ رِقابٍ، وكُتِبَتْ له مِئَةُ حَسَنَةٍ، ومُحِيَتْ عنْه مِئَةُ سَيِّئَةٍ، وكانَتْ له حِرْزًا مِنَ الشَّيْطانِ يَومَهُ ذلكَ حتَّى يُمْسِيَ، ولَمْ يَأْتِ أحَدٌ بأَفْضَلَ ممَّا جاءَ به، إلَّا أحَدٌ عَمِلَ أكْثَرَ مِن ذلكَ.
+If you found this guide helpful, please give it a star on GitHub!
 
-صحيح البخاري
+---
+
+> مَن قالَ: لا إلَهَ إلَّا اللَّهُ، وحْدَهُ لا شَرِيكَ له، له المُلْكُ وله الحَمْدُ، وهو علَى كُلِّ شَيءٍ قَدِيرٌ، في يَومٍ مِئَةَ مَرَّةٍ؛ كانَتْ له عَدْلَ عَشْرِ رِقابٍ، وكُتِبَتْ له مِئَةُ حَسَنَةٍ، ومُحِيَتْ عنْه مِئَةُ سَيِّئَةٍ، وكانَتْ له حِرْزًا مِنَ الشَّيْطانِ يَومَهُ ذلكَ حتَّى يُمْسِيَ، ولَمْ يَأْتِ أحَدٌ بأَفْضَلَ ممَّا جاءَ به، إلَّا أحَدٌ عَمِلَ أكْثَرَ مِن ذلكَ.
+>
+> — صحيح البخاري
